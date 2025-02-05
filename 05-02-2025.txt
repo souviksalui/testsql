@@ -1,0 +1,141 @@
+https://github.com/niteshkumartiwari/B-Plus-Tree
+https://github.com/suehyunpark/SQL-DBMS/tree/main
+https://github.com/auditee/Hospital-database-Management-System/tree/main
+
+Creating a full SQL structure for a database from scratch involves several steps, and I'll explain each one, including how to create the database, tables, primary keys (PK), foreign keys (FK), references, auto-increment, insert data, and the use of triggers, events, and stored procedures.
+
+1. Creating the Database
+To start with, we need to create a database in SQL. This is done with the CREATE DATABASE statement.
+
+sql
+Copy
+CREATE DATABASE CompanyDB;
+Once the database is created, we use the USE statement to select it.
+
+sql
+Copy
+USE CompanyDB;
+2. Creating Tables
+Now, we can create tables within this database. Let’s create a couple of example tables to represent a company: Employees and Departments.
+
+Employees Table
+sql
+Copy
+CREATE TABLE Employees (
+    EmployeeID INT AUTO_INCREMENT PRIMARY KEY,  -- Primary Key with auto-increment
+    FirstName VARCHAR(50),
+    LastName VARCHAR(50),
+    BirthDate DATE,
+    DepartmentID INT,  -- Foreign Key
+    Salary DECIMAL(10, 2),
+    HireDate DATE,
+    CONSTRAINT fk_Department FOREIGN KEY (DepartmentID) REFERENCES Departments(DepartmentID)  -- Foreign Key Reference to Departments table
+);
+Explanation:
+
+EmployeeID is the Primary Key (PK), which uniquely identifies each employee.
+The AUTO_INCREMENT keyword ensures that this column automatically increments for each new row inserted.
+DepartmentID is a Foreign Key (FK) referencing the Departments table. This ensures that the employee is assigned to a valid department.
+Departments Table
+sql
+Copy
+CREATE TABLE Departments (
+    DepartmentID INT AUTO_INCREMENT PRIMARY KEY,
+    DepartmentName VARCHAR(100),
+    ManagerID INT,
+    CONSTRAINT fk_Manager FOREIGN KEY (ManagerID) REFERENCES Employees(EmployeeID)  -- FK referencing Employees table (self-referencing)
+);
+Explanation:
+
+DepartmentID is the Primary Key (PK) for the Departments table.
+ManagerID is a Foreign Key (FK) that references the EmployeeID from the Employees table, showing that the department has a manager who is an employee.
+3. Inserting Data
+We can insert data into these tables using the INSERT INTO statement.
+
+Insert Departments:
+sql
+Copy
+INSERT INTO Departments (DepartmentName, ManagerID)
+VALUES 
+('Human Resources', NULL),
+('Sales', 1),
+('Engineering', 2);
+Explanation:
+
+The ManagerID in Human Resources is set to NULL (no manager yet).
+Insert Employees:
+sql
+Copy
+INSERT INTO Employees (FirstName, LastName, BirthDate, DepartmentID, Salary, HireDate)
+VALUES 
+('John', 'Doe', '1985-07-13', 1, 50000, '2010-03-01'),
+('Jane', 'Smith', '1983-11-22', 2, 60000, '2012-05-10'),
+('Mark', 'Taylor', '1990-01-15', 3, 70000, '2015-08-15');
+4. Triggers
+Triggers are special types of stored programs that are automatically executed or fired when certain events occur in the database.
+
+Trigger Example: Automatically update employee salary when a promotion occurs.
+sql
+Copy
+DELIMITER $$  -- Change delimiter for multi-line trigger definition
+CREATE TRIGGER UpdateSalaryAfterPromotion
+AFTER UPDATE ON Employees
+FOR EACH ROW
+BEGIN
+    IF OLD.Salary < NEW.Salary THEN
+        INSERT INTO SalaryAudit (EmployeeID, OldSalary, NewSalary, ChangeDate)
+        VALUES (NEW.EmployeeID, OLD.Salary, NEW.Salary, NOW());
+    END IF;
+END;
+$$
+DELIMITER ;  -- Reset delimiter to default
+Explanation:
+
+This trigger will execute after an update on the Employees table. If an employee's salary is increased, it will log the change in a SalaryAudit table (which we assume exists).
+5. Events
+Events in SQL are scheduled tasks that are executed at specific times or intervals.
+
+Event Example: Automatically increase all employee salaries by 5% every year.
+sql
+Copy
+CREATE EVENT SalaryIncreaseEvent
+ON SCHEDULE EVERY 1 YEAR
+STARTS '2025-01-01 00:00:00'
+DO
+    UPDATE Employees
+    SET Salary = Salary * 1.05;
+Explanation:
+
+This event will run every year and increase all employees' salaries by 5%. The event starts on January 1, 2025.
+6. Stored Procedures
+A stored procedure is a set of SQL statements that you can save and reuse. You can call it with parameters and it allows you to modularize your SQL logic.
+
+Stored Procedure Example: Get employees by department
+sql
+Copy
+DELIMITER $$
+
+CREATE PROCEDURE GetEmployeesByDepartment (IN deptID INT)
+BEGIN
+    SELECT FirstName, LastName, Salary
+    FROM Employees
+    WHERE DepartmentID = deptID;
+END;
+$$
+
+DELIMITER ;
+Explanation:
+
+This stored procedure, GetEmployeesByDepartment, takes a department ID as input and returns a list of employees in that department.
+You call this procedure with:
+sql
+Copy
+CALL GetEmployeesByDepartment(2);
+7. Summary of the Concepts
+Database Creation: We created a database using CREATE DATABASE and then selected it using USE.
+Table Creation: We created two tables, Employees and Departments, with Primary Keys (PK), Foreign Keys (FK), and Auto-Increment columns.
+Inserting Data: We inserted sample data into both tables using INSERT INTO.
+Triggers: We set up a trigger that logs salary increases to a separate SalaryAudit table.
+Events: We created an event to automatically increase all employees' salaries by 5% every year.
+Stored Procedures: We created a stored procedure to retrieve employees by their department ID.
+These concepts, when combined, can help in managing and automating data operations efficiently in a real-world SQL database.
